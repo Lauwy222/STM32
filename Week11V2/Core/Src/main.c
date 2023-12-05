@@ -79,6 +79,7 @@ static void MX_TIM2_Init(void);
   const uint8_t EEPROM_RDSR = 0b00000101;   // 0x05
   const uint8_t EEPROM_WRSR = 0b00000001;   // 0x01
 
+
   //NSS active
 
 
@@ -119,24 +120,65 @@ int main(void)
 
   /* USER CODE END 2 */
   //Write enable
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
-  HAL_SPI_Transmit(&hspi1, (uint8_t *) &EEPROM_WREN, 1, HAL_MAX_DELAY);
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+//  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
+//  HAL_SPI_Transmit(&hspi1, (uint8_t *) &EEPROM_WREN, 1, HAL_MAX_DELAY);
+//  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+//
+//  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
+//     HAL_SPI_Transmit(&hspi1, (uint8_t *) &EEPROM_WRITE, 1, HAL_MAX_DELAY);
+//     HAL_SPI_Transmit(&hspi1, (uint8_t *) &addr, 1, HAL_MAX_DELAY);
+//     HAL_SPI_Transmit(&hspi1, (uint8_t *) spi_buf, 3, HAL_MAX_DELAY);
+//     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+ 	  int i =0;
+
+ 	 spi_buf[0] = 0xAB;
+ 	      spi_buf[1] = 0xCD;
+ 	      spi_buf[2] = 0xEF;
+
+ 	      addr = 0x00;
+
+ 	      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
+ 	         HAL_SPI_Transmit(&hspi1, (uint8_t *) &EEPROM_WRITE, 1, HAL_MAX_DELAY);
+ 	         HAL_SPI_Transmit(&hspi1, (uint8_t *) &addr, 1, HAL_MAX_DELAY);
+ 	         HAL_SPI_Transmit(&hspi1, (uint8_t *) spi_buf, 3, HAL_MAX_DELAY);
+ 	         HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+
+ 	        wip = 1;
+ 	           while (wip)
+ 	           {
+ 	             // Read status register
+ 	             HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
+ 	             HAL_SPI_Transmit(&hspi1, (uint8_t *) &EEPROM_RDSR, 1, HAL_MAX_DELAY);
+ 	             HAL_SPI_Receive(&hspi1, (uint8_t *) spi_buf, 1, HAL_MAX_DELAY);
+ 	             HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+
+ 	             // Mask out WIP bit
+ 	             wip = spi_buf[0] & 0b00000001;
+ 	           }
+
+ 	          HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
+ 	             HAL_SPI_Transmit(&hspi1, (uint8_t *) &EEPROM_READ, 1, HAL_MAX_DELAY);
+ 	             HAL_SPI_Transmit(&hspi1, (uint8_t *) &addr, 1, HAL_MAX_DELAY);
+ 	             HAL_SPI_Receive(&hspi1, (uint8_t *) spi_buf, 3, HAL_MAX_DELAY);
+ 	             HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+
+ 	            for(int j=0; j<3; j++){
+ 	             	  	  uart_buf_len = sprintf(uart_buf, "ADDR: 0x%02x  Buffr: 0x%02x\r\n",j , (unsigned int) spi_buf[j]);
+ 	             	  	  HAL_UART_Transmit(&huart2, (uint8_t *) uart_buf, uart_buf_len, HAL_MAX_DELAY);
+ 	             	  	  }
   while (1)
   {
     /* USER CODE END WHILE */
 	  //Lezen
-	   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
-	   HAL_SPI_Transmit(&hspi1, (uint8_t *) &EEPROM_RDSR, 1, HAL_MAX_DELAY);
-	   HAL_SPI_Receive(&hspi1, (uint8_t *) spi_buf, 1, HAL_MAX_DELAY);
-	   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
-	  //Printen
-	  uart_buf_len = sprintf(uart_buf, "Status: 0x%02x\r\n", (unsigned int) spi_buf[0]);
-	  HAL_UART_Transmit(&huart2, (uint8_t *) uart_buf, uart_buf_len, HAL_MAX_DELAY);
 
+	  //Printen
+
+	  i++;
+	  if(i==16){i=0;}
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
